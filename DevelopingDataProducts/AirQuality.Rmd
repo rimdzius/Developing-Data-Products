@@ -1,0 +1,72 @@
+---
+title: "AirQuality Data"
+subtitle: "Analysis and Prediction"
+author: "Daniel Rimdzius"
+date: "1/21/2020"
+output:
+      ioslides_presentation:
+            smaller: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(ggplot2)
+library(caret)
+library(randomForest)
+library(shiny)
+```
+
+## AirQuality Dataset
+The "airquality" dataset built into base-R is data of the daily air quality measurements in New York from May to September of 1973. The dataset includes the following:
+
+```{r}
+str(airquality)
+```
+
+These data provide the basis for understanding and manipulating the interdependencies of each variable.
+
+This app was built to allow a user an easy interface to explore this dataset, choose some predictor values and calculate a predicted outcome using a simple randomForest model.
+
+## Exploratory Analysis
+This shiny app allows a user to explore this dataset using an interactive map. The X-axis, Y-axis, Color and Size of the data is user-selectable, allowing the user to explore how the variables depend on each other.
+
+```{r}
+ggplot(airquality, aes(x=Solar.R, y=Ozone, color=Temp, size=Wind)) +
+      geom_point(alpha=0.5)
+```
+
+## User Prediction Selection
+Once the user has selected the variables, they are able to enter values for the predictors (X-axis, Color, Size) and predict an outcome (Y-axis).
+
+This is a very simple layout and one does not need to know anything about prediction algorithms or regression models.
+
+To keep it simple, the code requires inputs from all three predictions, though with some additional time and effort, this could be modified to allow a user to select only one or all values as predictors.
+
+```{r}
+data <- airquality
+numericInput(inputId = "xpred", label = paste0("Enter a value for Solar.R"), value = 0)
+numericInput(inputId = "xpred", label = paste0("Enter a value for Temp"), value = 0)
+numericInput(inputId = "xpred", label = paste0("Enter a value for Wind"), value = 0)
+```
+
+## Results
+
+The results are only run when the user presses the Predict button. This allows a quicker interface, so the server is not constantly updating the randomForest model and prediction with every selection change.
+
+Below is the code from server.R showing the very simple randomForest model used as the model fit:
+
+```{r, eval=FALSE, echo=TRUE}
+## Train a randomforest model based on the complete cases of the data.
+model <- train(x=data[complete.cases(data),x],
+               y=data[complete.cases(data),y], method="rf")
+## Get the predicted value based on the inputed predictors.
+prediction <- predict(model, pred)
+## Get the results to the user.
+paste0("Predicted value of ",y,": ",round(prediction,2),
+       "\nPredictors: ",x1,", ",x2,", ",x3,
+       "\nUsing randomforest method inside caret package's train() function.",
+       "\n(Only complete cases used for modeling.)",
+       "\nTo make another prediction, 
+       enter new values and select Predict, 
+       or select new variables in the graph.")
+```
